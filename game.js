@@ -1,20 +1,13 @@
-var readline = require('readline');
-
 var async = require('async');
+
+var ui = require('./ui.js');
 
 var Company = require('./company.js');
 var Person = require('./person.js');
 var Product = require('./product.js');
 //var Customer = require('./customer.js');
 
-var workOptions = [
-  "Features",
-  "Testing",
-  "Bugs",
-  "Performance"
-];
 
-var company = new Company(1000, [new Person()], new Product(10));
 
 function getQualityIncrease(product, workUnits) {
   var remaining = 10 - product.quality;
@@ -35,48 +28,32 @@ function getNumChurnedCustomers(product) {
 }
 
 async.whilst(function() { return true; }, function(callback) {
+  var sim = {
+    company: new Company(1000, [new Person()], new Product(10))
+  };
   // choose what to work on
-  console.log('What do you want to work on?');
-  for (var i in workOptions) {
-    console.log('  ', [parseInt(i)+1,'.'].join(''), workOptions[i]);
-  }
-  var rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+  ui.getInput(function(answer) {
+    var qualityWorkUnits = (answer > 1)? 1 : 0;
 
-  rl.question(':', function(answer) {
-    rl.close();
-    console.error('answer', answer);
-    var qualityWorkUnits = (parseInt(answer) > 1)? 1 : 0;
     // calc probabilities of events
 
     // determine whether events occured this cycle
-    var numNewCustomers = getNumNewCustomers(company.product);
-    var numChurnedCustomers = getNumChurnedCustomers(company.product);
-    var qualityIncrease = getQualityIncrease(company.product, qualityWorkUnits);
+    sim.company.product.numNewCustomers =
+      getNumNewCustomers(sim.company.product);
+    sim.company.product.numChurnedCustomers =
+      getNumChurnedCustomers(sim.company.product);
+    sim.company.product.qualityIncrease =
+      getQualityIncrease(sim.company.product, qualityWorkUnits);
 
     // update world
-    company.product.customers += numNewCustomers - numChurnedCustomers;
-    company.product.quality += qualityIncrease;
-    var revenue = company.product.customers * company.product.price;
-    company.cash += revenue;
+    sim.company.product.customers +=
+      sim.company.numNewCustomers - sim.company.numChurnedCustomers;
+    sim.company.product.quality += sim.company.product.qualityIncrease;
+    sim.company.revenue =
+      sim.company.product.customers * sim.company.product.price;
+    sim.company.cash += sim.company.revenue;
 
-    // display output
-    console.log();
-    console.log('## Customers ##');
-    console.log('   New Customers:', numNewCustomers);
-    console.log('  Lost Customers:', numChurnedCustomers);
-    console.log(' Total Customers:', company.product.customers);
-    console.log();
-    console.log('## Product ##');
-    console.log(' Product Quality:', Math.round(company.product.quality*10)/10);
-    console.log();
-    console.log('## P&L ##');
-    console.log('         Revenue:', revenue);
-    console.log('            Cash:', company.cash);
-    console.log();
-
-    callback();
+    // print the state of the world
+    ui.updateUI(sim, callback);
   });
 });

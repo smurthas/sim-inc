@@ -1,8 +1,9 @@
 function Product(price) {
-  this.customers = 0;
+  this.customers = [];
   this.price = price;
-  this.quality = 5;
-  this.features = 1;
+  this.features = [];
+  this.wipFeatures = [];
+  this.demand = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 }
 
 
