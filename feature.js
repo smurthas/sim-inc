@@ -1,12 +1,12 @@
-function Feature(name) {
+function Feature(name, performance, utility) {
   this.name = name;
   this.usage = 0;
 
   this.tests = 0;
   this.bugs = 0;
 
-  this.performance = null;
-  this.utility = null;
+  this.performance = performance;
+  this.utility = utility;
 
   this.live = false;
 }
