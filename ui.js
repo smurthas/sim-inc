@@ -82,7 +82,6 @@ function prompt(question, callback) {
 function doAddFeatureMenu(sim, callback) {
   console.log('Add a feature');
   prompt('What do you want to call this feature?', function(name) {
-    console.error('name', name);
     var performance = Math.random() * 3;
     var utility = Math.random() * 3;
     sim.company.product.addFeature(name, performance, utility);
@@ -91,8 +90,6 @@ function doAddFeatureMenu(sim, callback) {
 }
 
 function doLaunchFeatureMenu(sim, callback) {
-  console.error('sim.company.product.features', sim.company.product.features);
-  console.log('Launch a feature');
   var wipFeatureNames = _.pluck(sim.company.product.getWIPFeatures(), 'name');
   wipFeatureNames.push('Go back');
   doMenu('Launch which feature?', wipFeatureNames, function(featureIndex) {
@@ -111,16 +108,11 @@ function doChooseEmployeeMenu(sim, callback) {
 }
 
 function doSetTaskMenu(employee, taskCode, sim, callback) {
-  console.error('employee', employee);
-  console.error('code', taskCode);
-  console.error('sim', sim);
   if (!employee) return callback();
   var featureNames = _.pluck(sim.company.product.features, 'name');
-  console.error('featureNames', featureNames);
-        //process.exit(1);
   featureNames.push('Go back');
   doMenu('Which feature?', featureNames, function(featureIndex) {
-    if (featureIndex === featureIndex.length - 1) return callback();
+    if (featureIndex === featureNames.length - 1) return callback();
     var feature = sim.company.product.features[featureIndex];
     employee.task = {
       code: taskCode,
@@ -162,6 +154,40 @@ function doManageWorkMenu(sim, callback) {
   });
 }
 
+function padLeft(string, length) {
+  return _.range(length - string.length).map(function() {return ' ';}).join('') +
+    string;
+}
+
+function round(num, digits) {
+  if (typeof digits !== 'number' || digits < 1) return Math.round(num);
+  return Math.round(num * Math.pow(10, digits))/Math.pow(10, digits);
+}
+
+function printMetric(name, value, digits) {
+  console.log(padLeft(name, 18) + ':', round(value, digits));
+}
+
+function printMetrics(sim) {
+  console.log();
+  console.log('## Customers ##');
+  printMetric('New Customers', sim.company.product.newCustomers.length);
+  printMetric('Churned Customers', sim.company.product.churnedCustomers.length);
+  printMetric('Total Customers', sim.company.product.customers.length);
+  console.log();
+  console.log('## Product ##');
+  sim.company.product.features.forEach(function(feature) {
+    console.log(padLeft('# ' + feature.name + ' #', 18));
+    printMetric('Utility', feature.utility, 1);
+    printMetric('Performance', feature.performance, 1);
+  });
+  console.log();
+  console.log('## P&L ##');
+  printMetric('Revenue', sim.company.revenue, 2);
+  printMetric('Cash', sim.company.cash, 2);
+  console.log();
+}
+
 var topOptions = [
   {
     pretty: 'Manage Employee Work',
@@ -198,6 +224,10 @@ module.exports.getInput = function(sim, callback) {
         doManageWorkMenu(sim, self);
         break;
 
+      case 'seeMetrics':
+        //doMetricsMenu(sim, self);
+        break;
+
       case 'done':
         callback();
         break;
@@ -210,22 +240,13 @@ module.exports.getInput = function(sim, callback) {
 
 module.exports.updateUI = function(sim, callback) {
   // display output
-  console.log();
-  console.log('## Customers ##');
-  console.log('   New Customers:', sim.company.product.numNewCustomers);
-  console.log('  Lost Customers:', sim.company.product.numChurnedCustomers);
-  console.log(' Total Customers:', sim.company.product.customers.length);
-  console.log();
-  console.log('## Product ##');
-  console.log('         Quality:', Math.round(sim.company.product.quality*10)/10);
-  console.log();
-  console.log('## P&L ##');
-  console.log('         Revenue:', sim.company.revenue);
-  console.log('            Cash:', sim.company.cash);
-  console.log();
+  printMetrics(sim);
 
   //console.error('sim.company', sim.company);
-  console.error('sim.company.product', _.omit(sim.company.product, 'customers'));
+  //console.error('sim.company.product',
+  //    _.omit(sim.company.product, 'customers', 'features'));
 
   prompt('ok?', callback);
 };
+
+module.exports.round = round;

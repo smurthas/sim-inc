@@ -1,4 +1,5 @@
 var async = require('async');
+var _ = require('underscore');
 
 var ui = require('./ui.js');
 
@@ -9,24 +10,12 @@ var Product = require('./product.js');
 var Customer = require('./customer.js');
 
 
-
-function getQuantityPossible(price) {
-  return 1000/price;
-}
-
-function getNewAwareness(numCustomers, totalAddressable) {
-  if (numCustomers >= totalAddressable) return 0;
-  var possible = totalAddressable - numCustomers;
-  if (possible > 10) possible = 10;
-  return Math.round(Math.random() * possible);
-}
-
-function getProductValue(product) {
+function getValue(features) {
   var value = 0;
 
-  product.features.forEach(function(feature) {
+  features.forEach(function(feature) {
     if (!feature.live) return;
-    var featureValue = feature.performance * feature.utility;
+    var featureValue = feature.performance * feature.utility / 10;
     if (feature.bugs > 10) featureValue = 0;
     else featureValue *= (10 - feature.bugs)/10;
     value += featureValue;
@@ -35,32 +24,43 @@ function getProductValue(product) {
   return value;
 }
 
-function getNumNewCustomers(product) {
-  var totalNew = 0;
+function doNewCustomers(sim) {
+  var product = sim.company.product;
+  var WOM = (4 + (product.customers.length * 0.06)) * (0.5 + Math.random());
+  WOM = Math.round(WOM);
 
-  var value = getProductValue(product);
-  var totalAddressable = getQuantityPossible(product.price) * value;
-  var possibleNew = getNewAwareness(product.customers.length, totalAddressable);
-
-  console.error('value', value);
-  console.error('totalAddressable', totalAddressable);
-  console.error('possibleNew', possibleNew);
-
-  for (var i = 0; i < possibleNew; i++) {
-    var valueMultiplier = 0.5 + Math.random();
-    if (valueMultiplier * value > product.price) totalNew++;
+  var newCustomers = [];
+  var value = getValue(product.features);
+  for (var i = 0; i < WOM; i++) {
+    var demand = 0.5 + Math.random();
+    var customerValue = demand * value;
+    var p_signup = Math.pow(0.8, Math.pow(product.price/customerValue, 3));
+    if (Math.random() < p_signup) {
+      var customer = new Customer(_.initial(product.features, 0), demand);
+      product.customers.push(customer);
+      newCustomers.push(customer);
+    }
   }
 
+  product.customers = _.union(product.customers, newCustomers);
 
-  console.error('totalNew', totalNew);
-  return totalNew;
+  return newCustomers;
 }
 
 
-function getNumChurnedCustomers(product) {
-  if (product.quality < 3) return 4;
-  if (product.quality > 8) return 0;
-  return 2;
+function doChurnCustomers(sim) {
+  var product = sim.company.product;
+  var customers = product.customers;
+  var keptCustomers = [];
+  customers.forEach(function(customer) {
+    var customerValue = getValue(customer.usingFeatures) * customer.demand;
+    var p_retain = Math.pow(0.7, Math.pow(product.price/customerValue, 5));
+    if (Math.random() < p_retain) keptCustomers.push(customer);
+  });
+
+  var churned = _.difference(customers, keptCustomers);
+  product.customers = keptCustomers;
+  return churned;
 }
 
 function doEmployeeWork(employee) {
@@ -81,8 +81,13 @@ function doEmployeeWork(employee) {
   }
 }
 
+var founders = [
+  new Person('Founder #1'),
+  new Person('Founder #2')
+];
 var sim = {
-  company: new Company(1000, [new Person('Founder #1')], new Product(10)),
+  version: 1,
+  company: new Company(1000, founders, new Product(10)),
   week: 0
 };
 
@@ -95,10 +100,6 @@ async.whilst(function() { return true; }, function(callback) {
     // calc probabilities of events
 
     // determine whether events occured this cycle
-    sim.company.product.numNewCustomers =
-      getNumNewCustomers(sim.company.product);
-    sim.company.product.numChurnedCustomers =
-      getNumChurnedCustomers(sim.company.product);
 
 
     // update world based on employee work
@@ -109,9 +110,11 @@ async.whilst(function() { return true; }, function(callback) {
     // handle random events
 
     // Add customers
-    for (var i = 0; i < sim.company.product.numNewCustomers; i++) {
-      sim.company.product.customers.push(new Customer());
-    }
+    sim.company.product.newCustomers = doNewCustomers(sim);
+
+    // churn customers
+    sim.company.product.churnedCustomers = doChurnCustomers(sim);
+
     //sim.company.product.customers +=
     //  sim.company.numNewCustomers - sim.company.numChurnedCustomers;
     //sim.company.product.quality += sim.company.product.qualityIncrease;
