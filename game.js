@@ -5,7 +5,7 @@ var ui = require('./ui.js');
 var Company = require('./company.js');
 var Person = require('./person.js');
 var Product = require('./product.js');
-var Feature = require('./feature.js');
+//var Feature = require('./feature.js');
 var Customer = require('./customer.js');
 
 
@@ -63,8 +63,26 @@ function getNumChurnedCustomers(product) {
   return 2;
 }
 
+function doEmployeeWork(employee) {
+  var feature = employee.task.feature;
+  switch(employee.task.code) {
+    case 'improveFeature':
+      feature.utility += Math.random();
+      break;
+    case 'fixBugs':
+      var bugsRemoved = 1;
+      feature.bugs = Math.max(0, feature.bugs - bugsRemoved);
+      break;
+    case 'improvePerformance':
+      feature.performance += Math.random();
+      break;
+    default:
+      throw new Error('unsupported task code' + employee.task.code);
+  }
+}
+
 var sim = {
-  company: new Company(1000, [new Person()], new Product(10)),
+  company: new Company(1000, [new Person('Founder #1')], new Product(10)),
   week: 0
 };
 
@@ -72,7 +90,7 @@ async.whilst(function() { return true; }, function(callback) {
   sim.week++;
 
   // choose what to work on
-  ui.getInput(sim, function(eventCode, resp) {
+  ui.getInput(sim, function() {
 
     // calc probabilities of events
 
@@ -83,21 +101,10 @@ async.whilst(function() { return true; }, function(callback) {
       getNumChurnedCustomers(sim.company.product);
 
 
-    // update world
-
-    // handle user work choice
-    if (eventCode === 'addFeature') {
-      // add a feature
-      var performance = Math.random() * 3;
-      var utility = Math.random() * 3;
-      sim.company.product.features.push(new Feature(resp, performance, utility));
-    } else if (eventCode === 'launchFeature') {
-      sim.company.product.launchFeature(resp);
-    } else if (eventCode === 'improveFeature') {
-      var feature = sim.company.product.features[resp];
-      feature.performance += Math.random();
-      feature.utility += Math.random();
-    }
+    // update world based on employee work
+    sim.company.people.forEach(function(employee) {
+      if (employee.task) doEmployeeWork(employee);
+    });
 
     // handle random events
 
@@ -113,6 +120,8 @@ async.whilst(function() { return true; }, function(callback) {
     sim.company.cash += sim.company.revenue;
 
     // print the state of the world
-    ui.updateUI(sim, callback);
+    ui.updateUI(sim, function() {
+      callback();
+    });
   });
 });

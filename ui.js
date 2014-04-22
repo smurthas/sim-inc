@@ -4,33 +4,29 @@ var _ = require('underscore');
 
 var workOptions = [
   {
-    pretty: 'Manage Employee Work',
-    code: 'employeeWork'
-  },
-  {
     pretty: "Add a feature",
     code: 'addFeature',
+    prettyVerb: 'adding a new feature called'
   },
   {
-    pretty: "Launch a feature",
-    code: 'launchFeature',
-  },
-  {
-    pretty: "Improve a feature",
+    pretty: "Improve functionality of a feature",
     code: 'improveFeature',
+    prettyVerb: 'improving the functionality of'
   },
   {
     pretty: "Fix Bugs",
     code: 'fixBugs',
+    prettyVerb: 'fixing bugs in'
   },
   {
-    pretty: "Improve Performance",
+    pretty: "Improve performance of a feature",
     code: 'improvePerformance',
+    prettyVerb: 'improving the performance of'
   },
-  {
-    pretty: "Improve Tooling",
-    code: 'improveTooling',
-  },
+  //{
+  //  pretty: "Improve Tooling",
+  //  code: 'improveTooling',
+  //},
   //{
   //  pretty: "Hiring",
   //  code: 'hiring',
@@ -49,6 +45,8 @@ function doMenu(titles, options, callback) {
 
   var menu = terminalMenu({
     width: width,
+    fg: 15,
+    bg: 'black'
   });
 
   menu.reset();
@@ -75,16 +73,19 @@ function prompt(question, callback) {
     output: process.stdout
   });
 
-  rl.question(question, function(answer) {
+  rl.question(question + ' ', function(answer) {
     rl.close();
     callback(answer);
   });
 }
 
-function doAddFeatureMenu(callback) {
+function doAddFeatureMenu(sim, callback) {
   console.log('Add a feature');
   prompt('What do you want to call this feature?', function(name) {
     console.error('name', name);
+    var performance = Math.random() * 3;
+    var utility = Math.random() * 3;
+    sim.company.product.addFeature(name, performance, utility);
     return callback(name);
   });
 }
@@ -93,42 +94,116 @@ function doLaunchFeatureMenu(sim, callback) {
   console.error('sim.company.product.features', sim.company.product.features);
   console.log('Launch a feature');
   var wipFeatureNames = _.pluck(sim.company.product.getWIPFeatures(), 'name');
-  doMenu('Launch which feature?', wipFeatureNames, callback);
+  wipFeatureNames.push('Go back');
+  doMenu('Launch which feature?', wipFeatureNames, function(featureIndex) {
+    if (featureIndex === wipFeatureNames.length - 1) return callback();
+    sim.company.product.launchFeature(featureIndex);
+    callback();
+  });
 }
 
-function doImproveFeatureMenu(sim, callback) {
-  console.error('sim.company.product.features', sim.company.product.features);
-  console.log('Improve a feature');
-  var featureNames = _.pluck(sim.company.product.features, 'name');
-  doMenu('Improve which feature?', featureNames, callback);
+function doChooseEmployeeMenu(sim, callback) {
+  var names = _.pluck(sim.company.people, 'name');
+  names.push('Go Back');
+  doMenu('Which employee?', names, function(index) {
+    callback(sim.company.people[index]);
+  });
 }
+
+function doSetTaskMenu(employee, taskCode, sim, callback) {
+  console.error('employee', employee);
+  console.error('code', taskCode);
+  console.error('sim', sim);
+  if (!employee) return callback();
+  var featureNames = _.pluck(sim.company.product.features, 'name');
+  console.error('featureNames', featureNames);
+        //process.exit(1);
+  featureNames.push('Go back');
+  doMenu('Which feature?', featureNames, function(featureIndex) {
+    if (featureIndex === featureIndex.length - 1) return callback();
+    var feature = sim.company.product.features[featureIndex];
+    employee.task = {
+      code: taskCode,
+      feature: feature
+    };
+    callback();
+  });
+}
+
+function doManageWorkMenu(sim, callback) {
+  doChooseEmployeeMenu(sim, function(employee) {
+    if (!employee) return callback();
+    var titles = ['Week ' + sim.week, ''];
+    var currentJob = employee.name + ' is working on ';
+    if (!employee.task) currentJob += 'nothing.';
+    else {
+      var workOption = _.find(workOptions,
+        function(option) { return option.code === employee.task.code; });
+      currentJob += workOption.prettyVerb + ' ' + employee.task.feature.name;
+    }
+    titles.push(currentJob);
+    titles.push('What would you like ' + employee.name + ' to work on?');
+    var options = _.pluck(workOptions, 'pretty');
+    options.push('Go back');
+    doMenu(titles, options, function(index) {
+      if (index > workOptions.length - 1) return doManageWorkMenu(sim, callback);
+      var code = workOptions[index].code;
+
+      switch(code) {
+        case 'addFeature':
+          doAddFeatureMenu(sim, callback);
+          break;
+
+        default:
+          doSetTaskMenu(employee, code, sim, callback);
+          //return callback(code);
+      }
+    });
+  });
+}
+
+var topOptions = [
+  {
+    pretty: 'Manage Employee Work',
+    code: 'employeeWork'
+  },
+  {
+    pretty: 'See Metrics',
+    code: 'seeMetrics',
+  },
+  {
+    pretty: "Launch a feature",
+    code: 'launchFeature',
+  },
+  {
+    pretty: 'Done',
+    code: 'done'
+  }
+];
+
 
 module.exports.getInput = function(sim, callback) {
-  var titles = ['Week ' + sim.week, 'What do you want to work on?'];
-  var options = _.pluck(workOptions, 'pretty');
+  var self = module.exports.getInput.bind(this, sim, callback);
+  var titles = ['Week ' + sim.week];
+  var options = _.pluck(topOptions, 'pretty');
   doMenu(titles, options, function(index) {
-    var code = workOptions[index].code;
-    callback = callback.bind(this, code);
+    var code = topOptions[index].code;
 
     switch(code) {
-      case 'employeeWork':
-        //doManageEmployeeWork(sim, callback);
-        break;
-
-      case 'addFeature':
-        doAddFeatureMenu(callback);
-        break;
-
       case 'launchFeature':
-        doLaunchFeatureMenu(sim, callback);
+        doLaunchFeatureMenu(sim, self);
         break;
 
-      case 'improveFeature':
-        doImproveFeatureMenu(sim, callback);
+      case 'employeeWork':
+        doManageWorkMenu(sim, self);
+        break;
+
+      case 'done':
+        callback();
         break;
 
       default:
-        return callback(code);
+        return self();
     }
   });
 };
@@ -150,7 +225,7 @@ module.exports.updateUI = function(sim, callback) {
   console.log();
 
   //console.error('sim.company', sim.company);
-  console.error('sim.company.product', sim.company.product);
+  console.error('sim.company.product', _.omit(sim.company.product, 'customers'));
 
   prompt('ok?', callback);
 };
