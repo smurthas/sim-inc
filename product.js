@@ -1,12 +1,24 @@
 var _ = require('underscore');
 
+var Customer = require('./customer.js');
 var Feature = require('./feature.js');
 
-function Product(price) {
-  this.customers = [];
-  this.price = price;
-  this.features = [];
-  this.demand = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+function Product(product) {
+  var customers = this.customers = [];
+  if (product.customers) {
+    product.customers.forEach(function(customer) {
+      customers.push(new Customer(customer));
+    });
+  }
+
+  this.price = product.price;
+
+  var features = this.features = [];
+  if (product.features) {
+    product.features.forEach(function(feature) {
+      features.push(new Feature(feature));
+    });
+  }
 }
 
 Product.prototype.getWIPFeatures = function() {
@@ -18,7 +30,11 @@ Product.prototype.launchFeature = function(wipIndex) {
 };
 
 Product.prototype.addFeature = function(name, performance, utility) {
-  this.features.push(new Feature(name, performance, utility));
+  this.features.push(new Feature({
+    name: name,
+    performance: performance,
+    utility: utility
+  }));
 };
 
 module.exports = Product;

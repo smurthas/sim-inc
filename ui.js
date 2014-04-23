@@ -113,10 +113,10 @@ function doSetTaskMenu(employee, taskCode, sim, callback) {
   featureNames.push('Go back');
   doMenu('Which feature?', featureNames, function(featureIndex) {
     if (featureIndex === featureNames.length - 1) return callback();
-    var feature = sim.company.product.features[featureIndex];
+    //var feature = sim.company.product.features[featureIndex];
     employee.task = {
       code: taskCode,
-      feature: feature
+      feature: featureIndex
     };
     callback();
   });
@@ -131,7 +131,8 @@ function doManageWorkMenu(sim, callback) {
     else {
       var workOption = _.find(workOptions,
         function(option) { return option.code === employee.task.code; });
-      currentJob += workOption.prettyVerb + ' ' + employee.task.feature.name;
+      var featureName = sim.company.product.features[employee.task.feature].name;
+      currentJob += workOption.prettyVerb + ' ' + featureName;
     }
     titles.push(currentJob);
     titles.push('What would you like ' + employee.name + ' to work on?');

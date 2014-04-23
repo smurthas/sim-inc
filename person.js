@@ -1,9 +1,10 @@
-function Employee(name, salary, skills, traits, morale) {
-  this.name = name;
-  this.salary = salary;
-  this.skills = skills;
-  this.traits = traits;
-  this.morale = morale;
+function Person(person) {
+  this.name = person.name;
+  this.task = person.task;
+  this.salary = person.salary;
+  this.skills = person.skills;
+  this.traits = person.traits;
+  this.morale = person.morale;
 }
 
-module.exports = Employee;
+module.exports = Person;

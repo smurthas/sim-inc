@@ -1,14 +1,14 @@
-function Feature(name, performance, utility) {
-  this.name = name;
-  this.usage = 0;
+function Feature(feature) {
+  this.name = feature.name;
+  this.usage = feature.usage || 0;
 
-  this.tests = 0;
-  this.bugs = 0;
+  this.tests = feature.tests || 0;
+  this.bugs = feature.bugs || 0;
 
-  this.performance = performance;
-  this.utility = utility;
+  this.performance = feature.performance;
+  this.utility = feature.utility;
 
-  this.live = false;
+  this.live = feature.live || false;
 }
 
 module.exports = Feature;

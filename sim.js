@@ -1,8 +1,8 @@
 var _ = require('underscore');
 
 var Company = require('./company.js');
-var Person = require('./person.js');
-var Product = require('./product.js');
+//var Person = require('./person.js');
+//var Product = require('./product.js');
 var Customer = require('./customer.js');
 
 // helper functions
@@ -21,40 +21,33 @@ function getValue(features) {
   return value;
 }
 
-function doEmployeeWork(employee) {
-  var feature = employee.task.feature;
-  switch(employee.task.code) {
-    case 'improveFeature':
-      feature.utility += Math.random();
-      break;
-    case 'fixBugs':
-      var bugsRemoved = 1;
-      feature.bugs = Math.max(0, feature.bugs - bugsRemoved);
-      break;
-    case 'improvePerformance':
-      feature.performance += Math.random();
-      break;
-    default:
-      throw new Error('unsupported task code' + employee.task.code);
-  }
-}
 
+var STARTER = {
+  version: 1,
+  company: {
+    cash: 1000,
+    people: [
+      {
+        name: 'Founder #1'
+      },
+      {
+        name: 'Founder #2'
+      }
+    ],
+    product: {
+      price: 10
+    }
+  },
+  week: 0
+};
 
 // Sim Class definition
 function Sim(selfie) {
-  if (selfie) {
-    this.version = selfie.version;
-    this.company = selfie.company;
-    this.week = selfie.week;
-  } else {
-    var founders = [
-      new Person('Founder #1'),
-      new Person('Founder #2')
-    ];
-    this.version = 1;
-    this.company = new Company(1000, founders, new Product(10));
-    this.week = 0;
-  }
+  if (!selfie) selfie = STARTER;
+
+  this.version = selfie.version;
+  this.company = new Company(selfie.company);
+  this.week = selfie.week;
 }
 
 // "private" functions
@@ -97,14 +90,33 @@ Sim.prototype._doChurnCustomers = function() {
   return churned;
 };
 
+Sim.prototype._doEmployeeWork = function() {
+  var product = this.company.product;
+  this.company.people.forEach(function(employee) {
+    var feature = product.features[employee.task.feature];
+    switch(employee.task.code) {
+      case 'improveFeature':
+        feature.utility += Math.random();
+        break;
+      case 'fixBugs':
+        var bugsRemoved = 1;
+        feature.bugs = Math.max(0, feature.bugs - bugsRemoved);
+        break;
+      case 'improvePerformance':
+        feature.performance += Math.random();
+        break;
+      default:
+        throw new Error('unsupported task code' + employee.task.code);
+    }
+  });
+};
+
 
 // "public" functions
 
 Sim.prototype.updateWorld = function() {
   // update world based on employee work
-  this.company.people.forEach(function(employee) {
-    if (employee.task) doEmployeeWork(employee);
-  });
+  this._doEmployeeWork();
 
   // handle random events
 

@@ -1,10 +1,16 @@
+var argv = require('optimist').argv;
 var async = require('async');
 
+var files = require('./files.js');
 var ui = require('./ui.js');
-
 var Sim = require('./sim.js');
 
-var sim = new Sim();
+var sim;
+if (argv.f) {
+  sim = new Sim(files.load(argv.f));
+} else {
+  sim = new Sim();
+}
 
 async.whilst(function() { return true; }, function(callback) {
   sim.week++;
@@ -16,6 +22,7 @@ async.whilst(function() { return true; }, function(callback) {
 
     // print the state of the world
     ui.updateUI(sim, function() {
+      if (argv.o) files.save(argv.o, sim);
       callback();
     });
   });
