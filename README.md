@@ -1,5 +1,24 @@
 #SimStartup!
 
+## Todo
+
+* [x] Skills-based progress
+  * Skills display, where?
+* Feature bugs
+  * Chance of discovery
+    * Tests to reduce likelyhood
+    * Tests a employee task
+  * Effect on churn
+  * Employee work
+* Set price
+* Hire people
+  * Salaries
+* COGS
+  * Employee work on reducing costs
+* Live time
+* Prof development
+  * Explicit time
+  * Increase based on work
 
 ## What happens?
 

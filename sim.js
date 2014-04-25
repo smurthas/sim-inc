@@ -5,6 +5,8 @@ var Company = require('./company.js');
 //var Product = require('./product.js');
 var Customer = require('./customer.js');
 
+var Stats = require('./stats.js');
+
 // helper functions
 
 function getValue(features) {
@@ -90,20 +92,34 @@ Sim.prototype._doChurnCustomers = function() {
   return churned;
 };
 
+function doImproveUtility(feature, person) {
+  var mu = person.traits.speed;
+  var stdDev = 0.1/person.traits.consistency;
+  var progress = Stats.gaussRandom() * stdDev + mu;
+  feature.performance += progress;
+}
+
+function doImprovePerformance(feature, person) {
+  var mu = person.traits.speed;
+  var stdDev = 0.1/person.traits.consistency;
+  var progress = Stats.gaussRandom() * stdDev + mu;
+  feature.performance += progress;
+}
+
 Sim.prototype._doEmployeeWork = function() {
   var product = this.company.product;
   this.company.people.forEach(function(employee) {
     var feature = product.features[employee.task.feature];
     switch(employee.task.code) {
       case 'improveFeature':
-        feature.utility += Math.random();
+        doImproveUtility(feature, employee);
         break;
       case 'fixBugs':
         var bugsRemoved = 1;
         feature.bugs = Math.max(0, feature.bugs - bugsRemoved);
         break;
       case 'improvePerformance':
-        feature.performance += Math.random();
+        doImprovePerformance(feature, employee);
         break;
       default:
         throw new Error('unsupported task code' + employee.task.code);

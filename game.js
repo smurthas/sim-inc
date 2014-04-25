@@ -7,7 +7,7 @@ var Sim = require('./sim.js');
 
 var sim;
 if (argv.f) {
-  sim = new Sim(files.load(argv.f));
+  sim = files.load(argv.f);
 } else {
   sim = new Sim();
 }
