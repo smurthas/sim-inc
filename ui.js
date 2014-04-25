@@ -4,31 +4,36 @@ var _ = require('underscore');
 
 var workOptions = [
   {
-    pretty: "Add a feature",
+    pretty: 'Add a feature',
     code: 'addFeature',
     prettyVerb: 'adding a new feature called'
   },
   {
-    pretty: "Improve functionality of a feature",
+    pretty: 'Improve functionality of a feature',
     code: 'improveFeature',
     prettyVerb: 'improving the functionality of'
   },
   {
-    pretty: "Fix Bugs",
+    pretty: 'Fix Bugs',
     code: 'fixBugs',
     prettyVerb: 'fixing bugs in'
   },
   {
-    pretty: "Improve performance of a feature",
+    pretty: 'Write Tests',
+    code: 'writeTests',
+    prettyVerb: 'writing tests for'
+  },
+  {
+    pretty: 'Improve performance of a feature',
     code: 'improvePerformance',
     prettyVerb: 'improving the performance of'
   },
   //{
-  //  pretty: "Improve Tooling",
+  //  pretty: 'Improve Tooling',
   //  code: 'improveTooling',
   //},
   //{
-  //  pretty: "Hiring",
+  //  pretty: 'Hiring',
   //  code: 'hiring',
   //}
 ];
@@ -181,6 +186,10 @@ function printMetrics(sim) {
     console.log(padLeft('# ' + feature.name + ' #', 18));
     printMetric('Utility', feature.utility, 1);
     printMetric('Performance', feature.performance, 1);
+    printMetric('Bugs', feature.bugs, 0);
+    printMetric('Bugs Squashed', feature.squashedBugs, 0);
+    printMetric('New Bugs', feature.newBugs, 0);
+    printMetric('Tests', feature.tests, 0);
   });
   console.log();
   console.log('## P&L ##');
@@ -199,7 +208,7 @@ var topOptions = [
     code: 'seeMetrics',
   },
   {
-    pretty: "Launch a feature",
+    pretty: 'Launch a feature',
     code: 'launchFeature',
   },
   {

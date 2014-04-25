@@ -11,3 +11,18 @@ module.exports.gaussRandom = function(uniformRand) {
   var c = Math.sqrt(-2*Math.log(r)/r);
   return u*c;
 };
+
+module.exports.poissonRandom = function(lambda, uniformRandom) {
+  if (!uniformRandom) uniformRandom = Math.random;
+  var L = Math.exp(-lambda);
+  var k = 0;
+  var p = 1;
+
+  do {
+    k++;
+    var u = uniformRandom();
+    p *= u;
+  } while (p > L);
+
+  return k - 1;
+};

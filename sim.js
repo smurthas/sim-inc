@@ -96,7 +96,7 @@ function doImproveUtility(feature, person) {
   var mu = person.traits.speed;
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
-  feature.performance += progress;
+  feature.utility += progress;
 }
 
 function doImprovePerformance(feature, person) {
@@ -106,33 +106,59 @@ function doImprovePerformance(feature, person) {
   feature.performance += progress;
 }
 
-Sim.prototype._doEmployeeWork = function() {
+function doFixBugs(feature, person) {
+  var lambda = person.traits.diligence * person.traits.speed * 10;
+  var bugsSquashed = Stats.poissonRandom(lambda);
+  if (bugsSquashed > feature.bugs) bugsSquashed = feature.bugs;
+  feature.bugs -= bugsSquashed;
+  feature.squashedBugs = bugsSquashed;
+}
+
+function doWriteTests(feature, person) {
+  var lambda = person.traits.diligence * person.traits.speed * 10;
+  var newTests = Stats.poissonRandom(lambda);
+  feature.tests += newTests;
+  feature.newTests = newTests;
+}
+
+Sim.prototype._doWork = function() {
   var product = this.company.product;
-  this.company.people.forEach(function(employee) {
-    var feature = product.features[employee.task.feature];
-    switch(employee.task.code) {
+  this.company.people.forEach(function(person) {
+    var feature = product.features[person.task.feature];
+    switch(person.task.code) {
       case 'improveFeature':
-        doImproveUtility(feature, employee);
+        doImproveUtility(feature, person);
         break;
       case 'fixBugs':
-        var bugsRemoved = 1;
-        feature.bugs = Math.max(0, feature.bugs - bugsRemoved);
+        doFixBugs(feature, person);
+        break;
+      case 'writeTests':
+        doWriteTests(feature, person);
         break;
       case 'improvePerformance':
-        doImprovePerformance(feature, employee);
+        doImprovePerformance(feature, person);
         break;
       default:
-        throw new Error('unsupported task code' + employee.task.code);
+        throw new Error('unsupported task code' + person.task.code);
     }
   });
 };
 
+Sim.prototype._doGenerateBugs = function() {
+  var features = this.company.product.features;
+  features.forEach(function(feature) {
+    var lambda = feature.performance * feature.utility / (feature.tests + 1);
+    var newBugs = Math.max(0, Stats.poissonRandom(lambda) - 1);
+    feature.bugs += newBugs;
+    feature.newBugs = newBugs;
+  });
+};
 
 // "public" functions
 
 Sim.prototype.updateWorld = function() {
-  // update world based on employee work
-  this._doEmployeeWork();
+  // update world based on work
+  this._doWork();
 
   // handle random events
 
@@ -141,6 +167,9 @@ Sim.prototype.updateWorld = function() {
 
   // churn customers
   this.company.product.churnedCustomers = this._doChurnCustomers();
+
+  // generate bugs
+  this._doGenerateBugs();
 
   this.company.revenue =
     this.company.product.customers.length * this.company.product.price;
