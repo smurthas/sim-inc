@@ -2,15 +2,6 @@
 
 ## Todo
 
-* [x] Skills-based progress
-  * Skills display, where?
-* Feature bugs
-  * Chance of discovery
-    * Tests to reduce likelyhood
-    * Tests a employee task
-  * Effect on churn
-  * Employee work
-* Set price
 * Hire people
   * Salaries
 * COGS
@@ -19,6 +10,17 @@
 * Prof development
   * Explicit time
   * Increase based on work
+
+## Done
+* [x] Set price
+* [x] Skills-based progress
+  * [x] Skills display, where?
+* [x] Feature bugs
+  * [x] Chance of discovery
+    * [x] Tests to reduce likelyhood
+    * [x] Tests a employee task
+  * [x] Effect on churn
+  * [x] Employee work
 
 ## What happens?
 

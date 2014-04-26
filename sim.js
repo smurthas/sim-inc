@@ -15,8 +15,7 @@ function getValue(features) {
   features.forEach(function(feature) {
     if (!feature.live) return;
     var featureValue = feature.performance * feature.utility / 10;
-    if (feature.bugs > 10) featureValue = 0;
-    else featureValue *= (10 - feature.bugs)/10;
+    if (feature.bugs > 1) featureValue *= 1/Math.pow(feature.bugs, 0.5);
     value += featureValue;
   });
 
@@ -115,7 +114,7 @@ function doFixBugs(feature, person) {
 }
 
 function doWriteTests(feature, person) {
-  var lambda = person.traits.diligence * person.traits.speed * 10;
+  var lambda = person.traits.diligence * person.traits.speed * 20;
   var newTests = Stats.poissonRandom(lambda);
   feature.tests += newTests;
   feature.newTests = newTests;
@@ -147,7 +146,8 @@ Sim.prototype._doWork = function() {
 Sim.prototype._doGenerateBugs = function() {
   var features = this.company.product.features;
   features.forEach(function(feature) {
-    var lambda = feature.performance * feature.utility / (feature.tests + 1);
+    var lambda = Math.log(feature.performance * feature.utility + 1) /
+                  (feature.tests + 1);
     var newBugs = Math.max(0, Stats.poissonRandom(lambda) - 1);
     feature.bugs += newBugs;
     feature.newBugs = newBugs;

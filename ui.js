@@ -94,6 +94,14 @@ function doAddFeatureMenu(sim, callback) {
   });
 }
 
+function doSetPrice(sim, callback) {
+  console.log('Current Price:', sim.company.product.price);
+  prompt('How much do you want to charge?', function(priceStr) {
+    sim.company.product.price = parseInt(priceStr.replace(/[^0-9.]/g, ''));
+    return callback();
+  });
+}
+
 function doLaunchFeatureMenu(sim, callback) {
   var wipFeatureNames = _.pluck(sim.company.product.getWIPFeatures(), 'name');
   wipFeatureNames.push('Go back');
@@ -170,8 +178,9 @@ function round(num, digits) {
   return Math.round(num * Math.pow(10, digits))/Math.pow(10, digits);
 }
 
-function printMetric(name, value, digits) {
-  console.log(padLeft(name, 18) + ':', round(value, digits));
+function printMetric(name, value, digits, scale) {
+  scale = scale || 1;
+  console.log(padLeft(name, 18) + ':', round(scale * value, digits));
 }
 
 function printMetrics(sim) {
@@ -192,6 +201,15 @@ function printMetrics(sim) {
     printMetric('Tests', feature.tests, 0);
   });
   console.log();
+  console.log('## People ##');
+  sim.company.people.forEach(function(person) {
+    console.log(padLeft('# ' + person.name + ' #', 18));
+    printMetric('Salary', person.salary, 0);
+    printMetric('Speed', person.traits.speed, 2, 10);
+    printMetric('Consistence', person.traits.consistency, 2, 10);
+    printMetric('Diligence', person.traits.diligence, 2, 10);
+  });
+  console.log();
   console.log('## P&L ##');
   printMetric('Revenue', sim.company.revenue, 2);
   printMetric('Cash', sim.company.cash, 2);
@@ -208,8 +226,12 @@ var topOptions = [
     code: 'seeMetrics',
   },
   {
-    pretty: 'Launch a feature',
+    pretty: 'Launch a Feature',
     code: 'launchFeature',
+  },
+  {
+    pretty: 'Set Product Price',
+    code: 'setPrice',
   },
   {
     pretty: 'Done',
@@ -226,16 +248,20 @@ module.exports.getInput = function(sim, callback) {
     var code = topOptions[index].code;
 
     switch(code) {
-      case 'launchFeature':
-        doLaunchFeatureMenu(sim, self);
-        break;
-
       case 'employeeWork':
         doManageWorkMenu(sim, self);
         break;
 
       case 'seeMetrics':
         //doMetricsMenu(sim, self);
+        break;
+
+      case 'launchFeature':
+        doLaunchFeatureMenu(sim, self);
+        break;
+
+      case 'setPrice':
+        doSetPrice(sim, self);
         break;
 
       case 'done':
