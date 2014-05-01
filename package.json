@@ -12,6 +12,8 @@
     "async": "~0.2.10",
     "terminal-menu": "~0.3.1",
     "underscore": "~1.6.0",
-    "optimist": "~0.6.1"
+    "optimist": "~0.6.1",
+    "charm": "~0.2.0",
+    "resumer": "0.0.0"
   }
 }

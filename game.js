@@ -1,9 +1,10 @@
 var argv = require('optimist').argv;
-var async = require('async');
 
 var files = require('./files.js');
-var ui = require('./ui.js');
+var TerminalUI = require('./ui.js').TerminalUI;
 var Sim = require('./sim.js');
+
+var weekTime = 10000;
 
 var sim;
 if (argv.f) {
@@ -12,18 +13,42 @@ if (argv.f) {
   sim = new Sim();
 }
 
-async.whilst(function() { return true; }, function(callback) {
+var ui = new TerminalUI(sim);
+
+var timeoutTime = 10000;
+function doCalc() {
   sim.week++;
 
-  // choose what to work on
-  ui.getInput(sim, function() {
-    // update world based on employee work
-    sim.updateWorld();
+  // update world based on employee work
+  sim.updateWorld();
 
-    // print the state of the world
-    ui.updateUI(sim, function() {
-      if (argv.o) files.save(argv.o, sim);
-      callback();
-    });
+  // print the state of the world
+  ui.updateUI(sim, function() {
+    if (argv.o) files.save(argv.o, sim);
+    //callback();
   });
+}
+
+var timeout, lastTime;
+var elapsed = 0;
+function calcLoop(nextTime) {
+  doCalc();
+  elapsed = 0;
+  lastTime = Date.now();
+  timeout = setTimeout(calcLoop.bind(calcLoop, nextTime), nextTime);
+}
+
+ui.on('pause', function() {
+  clearTimeout(timeout);
+  elapsed += Date.now() - lastTime;
+  timeoutTime = weekTime - elapsed;
 });
+
+ui.on('unpause', function() {
+  console.error('timeoutTime', timeoutTime);
+  lastTime = Date.now();
+  timeout = setTimeout(calcLoop.bind(calcLoop, weekTime), timeoutTime);
+});
+
+
+calcLoop(weekTime);

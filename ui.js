@@ -1,6 +1,14 @@
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 var readline = require('readline');
+
 var terminalMenu = require('terminal-menu');
+var charm;
 var _ = require('underscore');
+
+function createCharm() {
+  charm = require('charm')(process.stdout);
+}
 
 var workOptions = [
   {
@@ -51,7 +59,7 @@ function doMenu(titles, options, callback) {
   var menu = terminalMenu({
     width: width,
     fg: 15,
-    bg: 'black'
+    bg: 'black',
   });
 
   menu.reset();
@@ -168,52 +176,67 @@ function doManageWorkMenu(sim, callback) {
   });
 }
 
-function padLeft(string, length) {
-  return _.range(length - string.length).map(function() {return ' ';}).join('') +
-    string;
-}
 
 function round(num, digits) {
   if (typeof digits !== 'number' || digits < 1) return Math.round(num);
   return Math.round(num * Math.pow(10, digits))/Math.pow(10, digits);
 }
 
-function printMetric(name, value, digits, scale) {
-  scale = scale || 1;
-  console.log(padLeft(name, 18) + ':', round(scale * value, digits));
+function printHeader(row, title) {
+  charm.position(2, row);
+  charm.display('underscore');
+  charm.write('## ' + title + ' ##');
+  charm.display('reset');
 }
 
+function printSubheader(row, title) {
+  charm.position(4, row);
+  charm.write('# ' + title + ' #');
+}
+
+function printMetric(row, name, value, digits, scale) {
+  scale = scale || 1;
+  charm.position(18 - name.length, row);
+  charm.write(name + ': ');
+  charm.write('' + round(scale * value, digits));
+}
+
+
 function printMetrics(sim) {
-  console.log();
-  console.log('## Customers ##');
-  printMetric('New Customers', sim.company.product.newCustomers.length);
-  printMetric('Churned Customers', sim.company.product.churnedCustomers.length);
-  printMetric('Total Customers', sim.company.product.customers.length);
-  console.log();
-  console.log('## Product ##');
+  charm.display('reset');
+  charm.reset();
+
+  var i = 4;
+  charm.position(2, 2);
+  charm.write('Week ' + sim.week);
+  printHeader(i++, 'Customers');
+  printMetric(i++, 'New Customers', sim.company.product.newCustomers.length);
+  printMetric(i++, 'Churned Customers', sim.company.product.churnedCustomers.length);
+  printMetric(i++, 'Total Customers', sim.company.product.customers.length);
+  i++;
+  printHeader(i++, 'Product');
   sim.company.product.features.forEach(function(feature) {
-    console.log(padLeft('# ' + feature.name + ' #', 18));
-    printMetric('Utility', feature.utility, 1);
-    printMetric('Performance', feature.performance, 1);
-    printMetric('Bugs', feature.bugs, 0);
-    printMetric('Bugs Squashed', feature.squashedBugs, 0);
-    printMetric('New Bugs', feature.newBugs, 0);
-    printMetric('Tests', feature.tests, 0);
+    printSubheader(i++, feature.name);
+    printMetric(i++, 'Utility', feature.utility, 1);
+    printMetric(i++, 'Performance', feature.performance, 1);
+    printMetric(i++, 'Bugs', feature.bugs, 0);
+    printMetric(i++, 'Bugs Squashed', feature.squashedBugs, 0);
+    printMetric(i++, 'New Bugs', feature.newBugs, 0);
+    printMetric(i++, 'Tests', feature.tests, 0);
+    i++;
   });
-  console.log();
-  console.log('## People ##');
+  printHeader(i++, 'People');
   sim.company.people.forEach(function(person) {
-    console.log(padLeft('# ' + person.name + ' #', 18));
-    printMetric('Salary', person.salary, 0);
-    printMetric('Speed', person.traits.speed, 2, 10);
-    printMetric('Consistence', person.traits.consistency, 2, 10);
-    printMetric('Diligence', person.traits.diligence, 2, 10);
+    printSubheader(i++, person.name);
+    printMetric(i++, 'Salary', person.salary, 0);
+    printMetric(i++, 'Speed', person.traits.speed, 2, 10);
+    printMetric(i++, 'Consistence', person.traits.consistency, 2, 10);
+    printMetric(i++, 'Diligence', person.traits.diligence, 2, 10);
   });
-  console.log();
-  console.log('## P&L ##');
-  printMetric('Revenue', sim.company.revenue, 2);
-  printMetric('Cash', sim.company.cash, 2);
-  console.log();
+  i++;
+  printHeader(i++, 'P&L');
+  printMetric(i++, 'Revenue', sim.company.revenue, 2);
+  printMetric(i++, 'Cash', sim.company.cash, 2);
 }
 
 var topOptions = [
@@ -240,8 +263,50 @@ var topOptions = [
 ];
 
 
-module.exports.getInput = function(sim, callback) {
-  var self = module.exports.getInput.bind(this, sim, callback);
+// Class definition
+function TerminalUI(sim) {
+  this.sim = sim;
+  var self = this;
+  self._onData = function(buf) {
+    self._handleCharmData(buf);
+  };
+  createCharm();
+
+  process.stdin.on('data', self._onData);
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+}
+
+
+util.inherits(TerminalUI, EventEmitter);
+
+TerminalUI.prototype._handleCharmData = function(data) {
+  var self = this;
+  if (data && data.toString() === 'p') {
+    if (self.sim.paused) {
+      self.sim.paused = false;
+      self.emit('unpause');
+    } else {
+      self.sim.paused = true;
+      self.emit('pause');
+      process.stdin.removeListener('data', self._onData);
+      self.getInput(self.sim, function() {
+        charm.display('reset');
+        charm.reset();
+        process.stdin.on('data', self._onData);
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+
+        printMetrics(self.sim);
+        self.sim.paused = false;
+        self.emit('unpause');
+      });
+    }
+  }
+};
+
+TerminalUI.prototype.getInput = function(sim, callback) {
+  var self = this.getInput.bind(this, sim, callback);
   var titles = ['Week ' + sim.week];
   var options = _.pluck(topOptions, 'pretty');
   doMenu(titles, options, function(index) {
@@ -274,15 +339,15 @@ module.exports.getInput = function(sim, callback) {
   });
 };
 
-module.exports.updateUI = function(sim, callback) {
+TerminalUI.prototype.updateUI = function(sim, callback) {
   // display output
   printMetrics(sim);
 
-  //console.error('sim.company', sim.company);
-  //console.error('sim.company.product',
-  //    _.omit(sim.company.product, 'customers', 'features'));
-
-  prompt('ok?', callback);
+  callback();
 };
 
-module.exports.round = round;
+TerminalUI.prototype.round = round;
+
+
+// module definition
+module.exports.TerminalUI = TerminalUI;

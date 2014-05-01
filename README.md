@@ -4,14 +4,16 @@
 
 * Hire people
   * Salaries
+* Features get added through ideation and R&D
+  * Based on people's "ingenuity" trait?
 * COGS
   * Employee work on reducing costs
-* Live time
 * Prof development
   * Explicit time
   * Increase based on work
 
 ## Done
+* [x] Live time
 * [x] Set price
 * [x] Skills-based progress
   * [x] Skills display, where?
