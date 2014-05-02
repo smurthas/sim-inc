@@ -244,6 +244,8 @@ function printMetrics(sim) {
   i++;
   printHeader(i++, 'P&L');
   printMetric(i++, 'Revenue', sim.company.revenue, 2);
+  printMetric(i++, 'COGS', sim.company.COGS, 2);
+  printMetric(i++, 'Payroll', sim.company.payroll, 2);
   printMetric(i++, 'Cash', sim.company.cash, 2);
 }
 

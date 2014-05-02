@@ -4,7 +4,7 @@ var files = require('./files.js');
 var TerminalUI = require('./ui.js').TerminalUI;
 var Sim = require('./sim.js');
 
-var weekTime = 10000;
+var weekTime = argv.t || 10000;
 
 var sim;
 if (argv.f) {
@@ -41,7 +41,7 @@ function calcLoop(nextTime) {
 ui.on('pause', function() {
   clearTimeout(timeout);
   elapsed += Date.now() - lastTime;
-  timeoutTime = weekTime - elapsed;
+  timeoutTime = Math.max(weekTime - elapsed, 1);
 });
 
 ui.on('unpause', function() {

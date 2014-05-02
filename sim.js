@@ -101,12 +101,16 @@ function doAddFeature(person) {
   var stdDev = 0.1/person.traits.consistency;
   var utility = Stats.gaussRandom() * stdDev + mu;
   var performance = Stats.gaussRandom() * stdDev + mu;
+
+  mu = utility * performance / 20;
+  var COGS = Stats.gaussRandom() * stdDev + mu;
   var name = adjs[Math.floor(Math.random()*adjs.length)] + ' ' +
              nouns[Math.floor(Math.random()*nouns.length)];
   var feature = {
     name: name,
     performance: performance,
-    utility: utility
+    utility: utility,
+    COGS: COGS
   };
   return new Feature(feature);
 }
@@ -116,6 +120,7 @@ function doImproveUtility(feature, person) {
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.utility += progress;
+  feature.COGS += progress;
 }
 
 function doImprovePerformance(feature, person) {
@@ -123,6 +128,7 @@ function doImprovePerformance(feature, person) {
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.performance += progress;
+  feature.COGS += progress;
 }
 
 function doFixBugs(feature, person) {
@@ -177,6 +183,22 @@ Sim.prototype._doGenerateBugs = function() {
   });
 };
 
+Sim.prototype._doPnL = function() {
+  var product = this.company.product;
+
+  this.company.COGS = _.reduce(product.features, function(memo, feature) {
+    return memo + feature.COGS;
+  }, 0) * product.customers.length;
+
+  this.company.revenue = product.customers.length * product.price;
+
+  this.company.payroll = _.reduce(this.company.people, function(memo, person) {
+    return memo + (person.salary || 0);
+  }, 0);
+
+  this.company.cash += this.company.revenue - this.company.COGS - this.company.payroll;
+};
+
 // "public" functions
 
 Sim.prototype.updateWorld = function() {
@@ -194,9 +216,7 @@ Sim.prototype.updateWorld = function() {
   // generate bugs
   this._doGenerateBugs();
 
-  this.company.revenue =
-    this.company.product.customers.length * this.company.product.price;
-  this.company.cash += this.company.revenue;
+  this._doPnL();
 };
 
 
