@@ -36,14 +36,11 @@ var workOptions = [
     code: 'improvePerformance',
     prettyVerb: 'improving the performance of'
   },
-  //{
-  //  pretty: 'Improve Tooling',
-  //  code: 'improveTooling',
-  //},
-  //{
-  //  pretty: 'Hiring',
-  //  code: 'hiring',
-  //}
+  {
+    pretty: 'Hiring',
+    code: 'hiring',
+    prettyVerb: 'recruiting candidates'
+  }
 ];
 
 function doMenu(titles, options, callback) {
@@ -92,7 +89,7 @@ function prompt(question, callback) {
   });
 }
 
-function doAddFeatureMenu(sim, callback) {
+/*function doAddFeatureMenu(sim, callback) {
   console.log('Add a feature');
   prompt('What do you want to call this feature?', function(name) {
     var performance = Math.random() * 3;
@@ -100,7 +97,7 @@ function doAddFeatureMenu(sim, callback) {
     sim.company.product.addFeature(name, performance, utility);
     return callback(name);
   });
-}
+}*/
 
 function doSetPrice(sim, callback) {
   console.log('Current Price:', sim.company.product.price);
@@ -128,49 +125,60 @@ function doChooseEmployeeMenu(sim, callback) {
   });
 }
 
-function doSetTaskMenu(employee, taskCode, sim, callback) {
-  if (!employee) return callback();
+function doChooseFeatureMenu(sim, callback) {
   var featureNames = _.pluck(sim.company.product.features, 'name');
   featureNames.push('Go back');
   doMenu('Which feature?', featureNames, function(featureIndex) {
     if (featureIndex === featureNames.length - 1) return callback();
-    //var feature = sim.company.product.features[featureIndex];
-    employee.task = {
-      code: taskCode,
-      feature: featureIndex
-    };
-    callback();
+    callback(featureIndex);
   });
 }
 
 function doManageWorkMenu(sim, callback) {
   doChooseEmployeeMenu(sim, function(employee) {
     if (!employee) return callback();
+
     var titles = ['Week ' + sim.week, ''];
+
     var currentJob = employee.name + ' is working on ';
     if (!employee.task) currentJob += 'nothing.';
     else {
       var workOption = _.find(workOptions,
         function(option) { return option.code === employee.task.code; });
-      var featureName = sim.company.product.features[employee.task.feature].name;
-      currentJob += workOption.prettyVerb + ' ' + featureName;
+      currentJob += workOption.prettyVerb;
+      var feature = sim.company.product.features[employee.task.feature];
+      if (feature) currentJob += ' ' + feature.name;
+      else currentJob += '.';
     }
     titles.push(currentJob);
+
     titles.push('What would you like ' + employee.name + ' to work on?');
+
     var options = _.pluck(workOptions, 'pretty');
     options.push('Go back');
+
     doMenu(titles, options, function(index) {
       if (index > workOptions.length - 1) return doManageWorkMenu(sim, callback);
       var code = workOptions[index].code;
 
       switch(code) {
         case 'addFeature':
-          doAddFeatureMenu(sim, callback);
+          employee.task = {
+            code: code
+          };
+          callback();
           break;
 
         default:
-          doSetTaskMenu(employee, code, sim, callback);
-          //return callback(code);
+          doChooseFeatureMenu(sim, function(featureIndex) {
+            if (featureIndex >= 0) {
+              employee.task = {
+                code: code,
+                feature: featureIndex
+              };
+            }
+            callback();
+          });
       }
     });
   });
@@ -242,7 +250,8 @@ function printMetrics(sim) {
 var topOptions = [
   {
     pretty: 'Manage Employee Work',
-    code: 'employeeWork'
+    code: 'employeeWork',
+    onSelect: doManageWorkMenu
   },
   {
     pretty: 'See Metrics',
@@ -251,10 +260,12 @@ var topOptions = [
   {
     pretty: 'Launch a Feature',
     code: 'launchFeature',
+    onSelect: doLaunchFeatureMenu
   },
   {
     pretty: 'Set Product Price',
     code: 'setPrice',
+    onSelect: doSetPrice
   },
   {
     pretty: 'Done',
@@ -310,32 +321,9 @@ TerminalUI.prototype.getInput = function(sim, callback) {
   var titles = ['Week ' + sim.week];
   var options = _.pluck(topOptions, 'pretty');
   doMenu(titles, options, function(index) {
-    var code = topOptions[index].code;
-
-    switch(code) {
-      case 'employeeWork':
-        doManageWorkMenu(sim, self);
-        break;
-
-      case 'seeMetrics':
-        //doMetricsMenu(sim, self);
-        break;
-
-      case 'launchFeature':
-        doLaunchFeatureMenu(sim, self);
-        break;
-
-      case 'setPrice':
-        doSetPrice(sim, self);
-        break;
-
-      case 'done':
-        callback();
-        break;
-
-      default:
-        return self();
-    }
+    var option = topOptions[index];
+    if (option.onSelect instanceof Function) return option.onSelect(sim, self);
+    callback();
   });
 };
 

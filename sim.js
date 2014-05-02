@@ -1,9 +1,12 @@
+var fs = require('fs');
+
 var _ = require('underscore');
 
 var Company = require('./company.js');
 //var Person = require('./person.js');
 //var Product = require('./product.js');
 var Customer = require('./customer.js');
+var Feature = require('./feature.js');
 
 var Stats = require('./stats.js');
 
@@ -91,6 +94,23 @@ Sim.prototype._doChurnCustomers = function() {
   return churned;
 };
 
+var nouns = fs.readFileSync('nouns.txt').toString().split('\n');
+var adjs = fs.readFileSync('adjectives.txt').toString().split('\n');
+function doAddFeature(person) {
+  var mu = person.traits.speed;
+  var stdDev = 0.1/person.traits.consistency;
+  var utility = Stats.gaussRandom() * stdDev + mu;
+  var performance = Stats.gaussRandom() * stdDev + mu;
+  var name = adjs[Math.floor(Math.random()*adjs.length)] + ' ' +
+             nouns[Math.floor(Math.random()*nouns.length)];
+  var feature = {
+    name: name,
+    performance: performance,
+    utility: utility
+  };
+  return new Feature(feature);
+}
+
 function doImproveUtility(feature, person) {
   var mu = person.traits.speed;
   var stdDev = 0.1/person.traits.consistency;
@@ -136,6 +156,9 @@ Sim.prototype._doWork = function() {
         break;
       case 'improvePerformance':
         doImprovePerformance(feature, person);
+        break;
+      case 'addFeature':
+        product.features.push(doAddFeature(person));
         break;
       default:
         throw new Error('unsupported task code' + person.task.code);
