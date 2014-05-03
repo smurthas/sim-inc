@@ -22,6 +22,16 @@ var workOptions = [
     prettyVerb: 'improving the functionality of'
   },
   {
+    pretty: 'Improve performance of a feature',
+    code: 'improvePerformance',
+    prettyVerb: 'improving the performance of'
+  },
+  {
+    pretty: 'Reduce the cost of a feature',
+    code: 'reduceCost',
+    prettyVerb: 'reducing the cost of'
+  },
+  {
     pretty: 'Fix Bugs',
     code: 'fixBugs',
     prettyVerb: 'fixing bugs in'
@@ -30,11 +40,6 @@ var workOptions = [
     pretty: 'Write Tests',
     code: 'writeTests',
     prettyVerb: 'writing tests for'
-  },
-  {
-    pretty: 'Improve performance of a feature',
-    code: 'improvePerformance',
-    prettyVerb: 'improving the performance of'
   },
   {
     pretty: 'Hiring',
@@ -184,6 +189,14 @@ function doManageWorkMenu(sim, callback) {
   });
 }
 
+function doPrintMetrics(sim, callback) {
+  printMetrics(sim);
+
+  prompt('Ok?', function() {
+    callback();
+  });
+}
+
 
 function round(num, digits) {
   if (typeof digits !== 'number' || digits < 1) return Math.round(num);
@@ -231,6 +244,7 @@ function printMetrics(sim) {
     printMetric(i++, 'Bugs Squashed', feature.squashedBugs, 0);
     printMetric(i++, 'New Bugs', feature.newBugs, 0);
     printMetric(i++, 'Tests', feature.tests, 0);
+    printMetric(i++, 'COGS', feature.COGS, 2);
     i++;
   });
   printHeader(i++, 'People');
@@ -243,8 +257,8 @@ function printMetrics(sim) {
   });
   i++;
   printHeader(i++, 'P&L');
-  printMetric(i++, 'Revenue', sim.company.revenue, 2);
-  printMetric(i++, 'COGS', sim.company.COGS, 2);
+  printMetric(i++, 'Total Revenue', sim.company.revenue, 2);
+  printMetric(i++, 'Total COGS', sim.company.COGS, 2);
   printMetric(i++, 'Payroll', sim.company.payroll, 2);
   printMetric(i++, 'Cash', sim.company.cash, 2);
 }
@@ -258,6 +272,7 @@ var topOptions = [
   {
     pretty: 'See Metrics',
     code: 'seeMetrics',
+    onSelect: doPrintMetrics
   },
   {
     pretty: 'Launch a Feature',

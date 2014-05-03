@@ -102,7 +102,7 @@ function doAddFeature(person) {
   var utility = Stats.gaussRandom() * stdDev + mu;
   var performance = Stats.gaussRandom() * stdDev + mu;
 
-  mu = utility * performance / 20;
+  mu = utility * performance / 10;
   var COGS = Stats.gaussRandom() * stdDev + mu;
   var name = adjs[Math.floor(Math.random()*adjs.length)] + ' ' +
              nouns[Math.floor(Math.random()*nouns.length)];
@@ -120,7 +120,7 @@ function doImproveUtility(feature, person) {
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.utility += progress;
-  feature.COGS += progress;
+  feature.rawCOGS += progress;
 }
 
 function doImprovePerformance(feature, person) {
@@ -128,7 +128,14 @@ function doImprovePerformance(feature, person) {
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.performance += progress;
-  feature.COGS += progress;
+  feature.rawCOGS += progress;
+}
+
+function doReduceCosts(feature, person) {
+  var mu = person.traits.speed;
+  var stdDev = 0.1/person.traits.consistency;
+  var progress = Stats.gaussRandom() * stdDev + mu;
+  feature.COGSReduction += progress;
 }
 
 function doFixBugs(feature, person) {
@@ -163,6 +170,10 @@ Sim.prototype._doWork = function() {
       case 'improvePerformance':
         doImprovePerformance(feature, person);
         break;
+      case 'reduceCost':
+        doReduceCosts(feature, person);
+        break;
+
       case 'addFeature':
         product.features.push(doAddFeature(person));
         break;
@@ -187,6 +198,7 @@ Sim.prototype._doPnL = function() {
   var product = this.company.product;
 
   this.company.COGS = _.reduce(product.features, function(memo, feature) {
+    feature.COGS = feature.rawCOGS / Math.pow(feature.COGSReduction, 0.5);
     return memo + feature.COGS;
   }, 0) * product.customers.length;
 

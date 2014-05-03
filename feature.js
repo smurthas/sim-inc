@@ -8,7 +8,8 @@ function Feature(feature) {
   this.performance = feature.performance;
   this.utility = feature.utility;
 
-  this.COGS = feature.COGS || 0;
+  this.rawCOGS = feature.rawCOGS || 0;
+  this.COGSReduction = feature.COGSReduction || 0.5;
 
   this.live = feature.live || false;
 }
