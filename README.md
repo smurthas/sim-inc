@@ -2,17 +2,18 @@
 
 ## Todo
 
+* Quit job --> need a salary + more time
 * Hire people
-  * Salaries
-* Features get added through ideation and R&D
+  * [x] Salaries
+* [x] Features get added through ideation and R&D
   * Based on people's "ingenuity" trait?
-* COGS
-  * Employee work on reducing costs
 * Prof development
   * Explicit time
   * Increase based on work
 
 ## Done
+* [x] COGS
+  * [x] Employee work on reducing costs
 * [x] Live time
 * [x] Set price
 * [x] Skills-based progress
