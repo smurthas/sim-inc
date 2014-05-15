@@ -3,7 +3,7 @@ var fs = require('fs');
 var _ = require('underscore');
 
 var Company = require('./company.js');
-//var Person = require('./person.js');
+var Person = require('./person.js');
 //var Product = require('./product.js');
 var Customer = require('./customer.js');
 var Feature = require('./feature.js');
@@ -94,6 +94,11 @@ Sim.prototype._doChurnCustomers = function() {
   return churned;
 };
 
+Sim.prototype.hireCandidate = function(index) {
+  this.company.people.push(new Person(this.company.candidates[index]));
+  this.company.candidates.splice(index, 1);
+};
+
 var nouns = fs.readFileSync('nouns.txt').toString().split('\n');
 var adjs = fs.readFileSync('adjectives.txt').toString().split('\n');
 function doAddFeature(person) {
@@ -156,7 +161,9 @@ function doWriteTests(feature, person) {
 Sim.prototype._doWork = function() {
   var product = this.company.product;
   this.company.people.forEach(function(person) {
-    var feature = product.features[person.task.feature];
+    if (!(person.task && person.task.code)) return;
+
+    var feature = person.task && product.features[person.task.feature];
     switch(person.task.code) {
       case 'improveFeature':
         doImproveUtility(feature, person);
@@ -177,6 +184,7 @@ Sim.prototype._doWork = function() {
       case 'addFeature':
         product.features.push(doAddFeature(person));
         break;
+
       default:
         throw new Error('unsupported task code' + person.task.code);
     }

@@ -43,13 +43,44 @@ function doDetailMenu(options, callback) {
 
   menu.on('select', function(label, index) {
     menu.close();
-    options.items[index].onSelect(index, callback);
+    if (index === (options.items.length-1)) return callback();
+    var item = options.items[index];
+    if (item && (item.onSelect instanceof Function)) {
+      return options.items[index].onSelect(index, callback);
+    }
+    callback(item, index);
   });
 
   menu.createStream().pipe(process.stdout);
 }
 
 
-module.exports.doHireMenu = function(candidates, callback) {
-  doDetailMenu(candidates, callback);
+module.exports.doHireMenu = function(sim, callback) {
+  var candidates = [];
+  for (var i in sim.company.candidates) {
+    var c = sim.company.candidates[i];
+    var candidate = {
+      pretty: c.name,
+      info: {
+        Name: c.name,
+        Speed: c.traits.speed,
+        Consistency: c.traits.consistency,
+        Diligence: c.traits.diligence,
+        Salary: c.salary
+      }
+    };
+    candidates.push(candidate);
+  }
+
+  candidates.push({
+    pretty: 'Go back'
+  });
+  var options = {
+    title: ['Hire an Employee'],
+    items: candidates
+  };
+  doDetailMenu(options, function(item, index) {
+    if (typeof index === 'number') sim.hireCandidate(index);
+    callback();
+  });
 };

@@ -45,7 +45,6 @@ ui.on('pause', function() {
 });
 
 ui.on('unpause', function() {
-  console.error('timeoutTime', timeoutTime);
   lastTime = Date.now();
   timeout = setTimeout(calcLoop.bind(calcLoop, weekTime), timeoutTime);
 });

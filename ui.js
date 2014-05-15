@@ -3,6 +3,7 @@ var EventEmitter = require('events').EventEmitter;
 var readline = require('readline');
 
 var terminalMenu = require('terminal-menu');
+var hireMenu = require('./hireMenu.js');
 var charm;
 var _ = require('underscore');
 
@@ -174,6 +175,13 @@ function doManageWorkMenu(sim, callback) {
           callback();
           break;
 
+        case 'hiring':
+          employee.task = {
+            code: code
+          };
+          callback();
+          break;
+
         default:
           doChooseFeatureMenu(sim, function(featureIndex) {
             if (featureIndex >= 0) {
@@ -188,15 +196,6 @@ function doManageWorkMenu(sim, callback) {
     });
   });
 }
-
-function doPrintMetrics(sim, callback) {
-  printMetrics(sim);
-
-  prompt('Ok?', function() {
-    callback();
-  });
-}
-
 
 function round(num, digits) {
   if (typeof digits !== 'number' || digits < 1) return Math.round(num);
@@ -221,7 +220,6 @@ function printMetric(row, name, value, digits, scale) {
   charm.write(name + ': ');
   charm.write('' + round(scale * value, digits));
 }
-
 
 function printMetrics(sim) {
   charm.display('reset');
@@ -263,6 +261,17 @@ function printMetrics(sim) {
   printMetric(i++, 'Cash', sim.company.cash, 2);
 }
 
+
+function doPrintMetrics(sim, callback) {
+  printMetrics(sim);
+
+  prompt('Ok?', function() {
+    callback();
+  });
+}
+
+
+
 var topOptions = [
   {
     pretty: 'Manage Employee Work',
@@ -278,6 +287,11 @@ var topOptions = [
     pretty: 'Launch a Feature',
     code: 'launchFeature',
     onSelect: doLaunchFeatureMenu
+  },
+  {
+    pretty: 'Hire a new Employee',
+    code: 'hire',
+    onSelect: hireMenu.doHireMenu
   },
   {
     pretty: 'Set Product Price',

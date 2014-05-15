@@ -10,6 +10,7 @@
 * Prof development
   * Explicit time
   * Increase based on work
+* Browser UI?
 
 ## Done
 * [x] COGS

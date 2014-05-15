@@ -11,10 +11,17 @@ function Company(cash, founders, product) {
   } else {
     var company = cash;
     this.cash = company.cash;
+
     var people = this.people = [];
     company.people.forEach(function(person) {
       people.push(new Person(person));
     });
+
+    var candidates = this.candidates = [];
+    company.candidates.forEach(function(candidate) {
+      candidates.push(new Person(candidate));
+    });
+
     this.product = new Product(company.product);
   }
 }
