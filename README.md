@@ -4,9 +4,15 @@
 
 * [x] Features get added through ideation and R&D
   * Based on people's "ingenuity" trait?
+* Make job offers to candidates, might not accept
 * Candidate pool grows based on external factors
   * Employee recruiting
   * Success of product?
+  * Candidates leave pool after some amount of time
+* Metrics coloring
+* Employee work in their names
+* Feature values in selection screen
+* Right align money values
 * Prof development
   * Explicit time
   * Increase based on work

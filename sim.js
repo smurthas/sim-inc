@@ -9,6 +9,8 @@ var Customer = require('./customer.js');
 var Feature = require('./feature.js');
 
 var Stats = require('./stats.js');
+var Names = require('./names.js');
+
 
 // helper functions
 
@@ -201,6 +203,34 @@ Sim.prototype._doGenerateBugs = function() {
   });
 };
 
+
+Sim.prototype._getApplicantAppeal = function() {
+  return Math.log(this.company.product.customers + 2);
+};
+
+Sim.prototype._doUpdateCandidates = function() {
+  var appeal = this._getApplicantAppeal();
+  var newCandidates = Math.max(0, Stats.poissonRandom(appeal) - 1);
+
+  // this should range from about 3 to 70
+  var mu = appeal * 5;
+
+  // this should range from 2 to 6
+  var k = Math.floor(2 + (appeal * 0.3));
+  for (var i = 0; i < newCandidates; i++) {
+    var candidate = {
+      name: Names.randomName(Math.random() > 0.5),
+      traits: {
+        speed: Stats.gammaRandom(k, mu) / 100,
+        consistency: Stats.gammaRandom(k, mu) / 100,
+        diligence: Stats.gammaRandom(k, mu) / 100
+      },
+      salary: 450 + Math.floor(Stats.gammaRandom(k, mu) * 40)
+    };
+    this.company.candidates.push(candidate);
+  }
+};
+
 Sim.prototype._doPnL = function() {
   var product = this.company.product;
 
@@ -238,6 +268,7 @@ Sim.prototype.updateWorld = function() {
   this._doWork();
 
   // handle random events
+  this._doUpdateCandidates();
 
   // Add customers
   this.company.product.newCustomers = this._doNewCustomers();

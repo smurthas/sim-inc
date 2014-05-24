@@ -54,6 +54,11 @@ function doDetailMenu(options, callback) {
   menu.createStream().pipe(process.stdout);
 }
 
+function round(num, digits) {
+  if (typeof digits !== 'number' || digits < 1) return Math.round(num);
+  return Math.round(num * Math.pow(10, digits))/Math.pow(10, digits);
+}
+
 
 module.exports.doHireMenu = function(sim, callback) {
   var candidates = [];
@@ -62,10 +67,9 @@ module.exports.doHireMenu = function(sim, callback) {
     var candidate = {
       pretty: c.name,
       info: {
-        Name: c.name,
-        Speed: c.traits.speed,
-        Consistency: c.traits.consistency,
-        Diligence: c.traits.diligence,
+        Speed: round(c.traits.speed*10, 1),
+        Consistency: round(c.traits.consistency*10, 1),
+        Diligence: round(c.traits.diligence*10, 1),
         Salary: c.salary
       }
     };
