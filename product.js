@@ -25,6 +25,10 @@ Product.prototype.getWIPFeatures = function() {
   return _.filter(this.features, function(feature) { return !feature.live; });
 };
 
+Product.prototype.getLiveFeatures = function() {
+  return _.where(this.features, {live: true});
+};
+
 Product.prototype.launchFeature = function(wipIndex) {
   this.getWIPFeatures()[wipIndex].live = true;
 };

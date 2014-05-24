@@ -32,10 +32,12 @@ var STARTER = {
     cash: 1000,
     people: [
       {
-        name: 'Founder #1'
+        name: 'Founder #1',
+        traits: { }
       },
       {
-        name: 'Founder #2'
+        name: 'Founder #2',
+        traits: { }
       }
     ],
     product: {
@@ -62,13 +64,13 @@ Sim.prototype._doNewCustomers = function() {
   WOM = Math.round(WOM);
 
   var newCustomers = [];
-  var value = getValue(product.features);
+  var value = getValue(product.getLiveFeatures());
   for (var i = 0; i < WOM; i++) {
     var demand = 0.5 + Math.random();
     var customerValue = demand * value;
     var p_signup = Math.pow(0.8, Math.pow(product.price/customerValue, 3));
     if (Math.random() < p_signup) {
-      var customer = new Customer(_.initial(product.features, 0), demand);
+      var customer = new Customer(_.initial(product.getLiveFeatures(), 0), demand);
       product.customers.push(customer);
       newCustomers.push(customer);
     }
@@ -94,11 +96,6 @@ Sim.prototype._doChurnCustomers = function() {
   return churned;
 };
 
-Sim.prototype.hireCandidate = function(index) {
-  this.company.people.push(new Person(this.company.candidates[index]));
-  this.company.candidates.splice(index, 1);
-};
-
 var nouns = fs.readFileSync('nouns.txt').toString().split('\n');
 var adjs = fs.readFileSync('adjectives.txt').toString().split('\n');
 function doAddFeature(person) {
@@ -121,7 +118,7 @@ function doAddFeature(person) {
 }
 
 function doImproveUtility(feature, person) {
-  var mu = person.traits.speed;
+  var mu = person.traits.speed * person.hours/40;
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.utility += progress;
@@ -129,7 +126,7 @@ function doImproveUtility(feature, person) {
 }
 
 function doImprovePerformance(feature, person) {
-  var mu = person.traits.speed;
+  var mu = person.traits.speed * person.hours/40;
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.performance += progress;
@@ -137,14 +134,15 @@ function doImprovePerformance(feature, person) {
 }
 
 function doReduceCosts(feature, person) {
-  var mu = person.traits.speed;
+  var mu = person.traits.speed * person.hours/40;
   var stdDev = 0.1/person.traits.consistency;
   var progress = Stats.gaussRandom() * stdDev + mu;
   feature.COGSReduction += progress;
 }
 
 function doFixBugs(feature, person) {
-  var lambda = person.traits.diligence * person.traits.speed * 10;
+  var lambda = person.traits.diligence * person.traits.speed *
+    10 * person.hours/40;
   var bugsSquashed = Stats.poissonRandom(lambda);
   if (bugsSquashed > feature.bugs) bugsSquashed = feature.bugs;
   feature.bugs -= bugsSquashed;
@@ -152,7 +150,8 @@ function doFixBugs(feature, person) {
 }
 
 function doWriteTests(feature, person) {
-  var lambda = person.traits.diligence * person.traits.speed * 20;
+  var lambda = person.traits.diligence * person.traits.speed *
+    20 * person.hours/40;
   var newTests = Stats.poissonRandom(lambda);
   feature.tests += newTests;
   feature.newTests = newTests;
@@ -192,7 +191,7 @@ Sim.prototype._doWork = function() {
 };
 
 Sim.prototype._doGenerateBugs = function() {
-  var features = this.company.product.features;
+  var features = this.company.product.getLiveFeatures();
   features.forEach(function(feature) {
     var lambda = Math.log(feature.performance * feature.utility + 1) /
                   (feature.tests + 1);
@@ -205,7 +204,7 @@ Sim.prototype._doGenerateBugs = function() {
 Sim.prototype._doPnL = function() {
   var product = this.company.product;
 
-  this.company.COGS = _.reduce(product.features, function(memo, feature) {
+  this.company.COGS = _.reduce(product.getLiveFeatures(), function(memo, feature) {
     feature.COGS = feature.rawCOGS / Math.pow(feature.COGSReduction, 0.5);
     return memo + feature.COGS;
   }, 0) * product.customers.length;
@@ -216,10 +215,23 @@ Sim.prototype._doPnL = function() {
     return memo + (person.salary || 0);
   }, 0);
 
-  this.company.cash += this.company.revenue - this.company.COGS - this.company.payroll;
+  this.company.profit = this.company.revenue -
+                        this.company.COGS -
+                        this.company.payroll;
+  this.company.cash += this.company.profit;
 };
 
 // "public" functions
+
+Sim.prototype.hireCandidate = function(index) {
+  this.company.people.push(new Person(this.company.candidates[index]));
+  this.company.candidates.splice(index, 1);
+};
+
+Sim.prototype.makeEmployeeFulltime = function(employee) {
+  employee.hours = 40;
+  employee.salary = 1000;
+};
 
 Sim.prototype.updateWorld = function() {
   // update world based on work
@@ -238,6 +250,7 @@ Sim.prototype.updateWorld = function() {
 
   this._doPnL();
 };
+
 
 
 module.exports = Sim;

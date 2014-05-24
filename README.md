@@ -2,17 +2,20 @@
 
 ## Todo
 
-* Quit job --> need a salary + more time
-* Hire people
-  * [x] Salaries
 * [x] Features get added through ideation and R&D
   * Based on people's "ingenuity" trait?
+* Candidate pool grows based on external factors
+  * Employee recruiting
+  * Success of product?
 * Prof development
   * Explicit time
   * Increase based on work
 * Browser UI?
 
 ## Done
+* [x] Hire people
+  * [x] Salaries
+* [x] Quit job --> need a salary + more time
 * [x] COGS
   * [x] Employee work on reducing costs
 * [x] Live time

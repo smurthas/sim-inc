@@ -140,6 +140,29 @@ function doChooseFeatureMenu(sim, callback) {
   });
 }
 
+function getParttimeEmployees(sim) {
+  return _.filter(sim.company.people, function(person) {
+    return person.salary < 1;
+  });
+}
+
+function doGoFulltime(sim, callback) {
+  var nonFulltime = getParttimeEmployees(sim);
+  var names = _.pluck(nonFulltime, 'name');
+  names.push('Go Back');
+  doMenu('Which employee?', names, function(index) {
+    var employee = nonFulltime[index];
+    if (!employee) return callback();
+    sim.makeEmployeeFulltime(employee);
+    if (getParttimeEmployees(sim).length === 0) {
+      topOptions = _.reject(topOptions, function(item) {
+        return item.code === 'fulltime';
+      });
+    }
+    callback();
+  });
+}
+
 function doManageWorkMenu(sim, callback) {
   doChooseEmployeeMenu(sim, function(employee) {
     if (!employee) return callback();
@@ -169,16 +192,8 @@ function doManageWorkMenu(sim, callback) {
 
       switch(code) {
         case 'addFeature':
-          employee.task = {
-            code: code
-          };
-          callback();
-          break;
-
         case 'hiring':
-          employee.task = {
-            code: code
-          };
+          employee.task = { code: code };
           callback();
           break;
 
@@ -258,6 +273,7 @@ function printMetrics(sim) {
   printMetric(i++, 'Total Revenue', sim.company.revenue, 2);
   printMetric(i++, 'Total COGS', sim.company.COGS, 2);
   printMetric(i++, 'Payroll', sim.company.payroll, 2);
+  printMetric(i++, 'Profit', sim.company.profit, 2);
   printMetric(i++, 'Cash', sim.company.cash, 2);
 }
 
@@ -269,8 +285,6 @@ function doPrintMetrics(sim, callback) {
     callback();
   });
 }
-
-
 
 var topOptions = [
   {
@@ -287,6 +301,11 @@ var topOptions = [
     pretty: 'Launch a Feature',
     code: 'launchFeature',
     onSelect: doLaunchFeatureMenu
+  },
+  {
+    pretty: 'Go fulltime',
+    code: 'fulltime',
+    onSelect: doGoFulltime
   },
   {
     pretty: 'Hire a new Employee',

@@ -18,9 +18,11 @@ function Company(cash, founders, product) {
     });
 
     var candidates = this.candidates = [];
-    company.candidates.forEach(function(candidate) {
-      candidates.push(new Person(candidate));
-    });
+    if(company.candidates) {
+      company.candidates.forEach(function(candidate) {
+        candidates.push(new Person(candidate));
+      });
+    }
 
     this.product = new Product(company.product);
   }

@@ -1,5 +1,6 @@
 function Person(person) {
   this.name = person.name;
+  this.hours = person.hours;
   this.task = person.task;
   this.salary = person.salary;
   this.skills = person.skills;
