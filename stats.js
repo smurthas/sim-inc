@@ -1,3 +1,6 @@
+var randist = require('jssl').randist;
+randist.reseedRNG(Math.random()*10000000000);
+
 var f = [];
 module.exports.factorial = function(n) {
   if (n === 0 || n === 1)
@@ -10,7 +13,8 @@ module.exports.factorial = function(n) {
 
 // from http://stackoverflow.com/a/196941/279903
 module.exports.gaussRandom = function(uniformRand) {
-  if (!uniformRand) uniformRand = Math.random;
+  return randist.ranGaussian(1);
+  /*if (!uniformRand) uniformRand = Math.random;
   var u = 2*uniformRand()-1;
   var v = 2*uniformRand()-1;
   var r = u*u + v*v;
@@ -18,11 +22,12 @@ module.exports.gaussRandom = function(uniformRand) {
   if(r === 0 || r > 1) return module.exports.gaussRandom(uniformRand);
 
   var c = Math.sqrt(-2*Math.log(r)/r);
-  return u*c;
+  return u*c;*/
 };
 
 module.exports.poissonRandom = function(lambda, uniformRandom) {
-  if (!uniformRandom) uniformRandom = Math.random;
+  return randist.ranPoisson(lambda);
+  /*if (!uniformRandom) uniformRandom = Math.random;
   var L = Math.exp(-lambda);
   var k = 0;
   var p = 1;
@@ -33,7 +38,7 @@ module.exports.poissonRandom = function(lambda, uniformRandom) {
     p *= u;
   } while (p > L);
 
-  return k - 1;
+  return k - 1;*/
 };
 
 
@@ -42,14 +47,17 @@ module.exports.poissonRandom = function(lambda, uniformRandom) {
 // to 0 when they should go to 1.
 module.exports._gammaCDFSumLength = 100;
 
+var webpage_gamma = require('./webpage_gamma.js');
 // via wikipedia
 module.exports.gammaCDF = function(k, mu, x) {
+  return webpage_gamma.gammaCDF(k, mu, x);
+  /*
   var b = k/mu;
   var sum = 0;
   for (var i = k; i < module.exports._gammaCDFSumLength; i++) {
     sum += Math.pow(b*x, i)/module.exports.factorial(i);
   }
-  return Math.exp(-b*x) * sum;
+  return Math.exp(-b*x) * sum;*/
 };
 
 // invert the gamma CDF, use a recursive bisection search with a limited
@@ -58,10 +66,11 @@ module.exports.gammaCDF = function(k, mu, x) {
 // search like secant for false position, or better yet a non-inversion
 // approxmiation.
 module.exports.gammaRandom = function(k, mu, uniformRandom) {
-  if (!(uniformRandom instanceof Function)) uniformRandom = Math.random;
+  return randist.ranGamma(k, mu/k);
+  /*if (!(uniformRandom instanceof Function)) uniformRandom = Math.random;
   var r = uniformRandom();
   var fn = module.exports.gammaCDF.bind(null, k, mu);
-  return module.exports.bisection(fn, 0, k*mu*4, r, 0.001);
+  return module.exports.bisection(fn, 0, k*mu*4, r, 0.001);*/
 };
 
 

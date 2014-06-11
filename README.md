@@ -4,6 +4,17 @@
 
 * [x] Features get added through ideation and R&D
   * Based on people's "ingenuity" trait?
+* Founders have (hidden) bank account that drains if they go full time
+  with too low of a salary for too long
+* Accomplishments
+  * First profitable {week, quarter, year}
+  * Going full time
+  * First employee
+  * First Customer
+* Hints
+  * Get utility up "your product isn't usefull enough"
+  * Ger perf up "your product is too slow"
+  * Lower price "too expensive"
 * Make job offers to candidates, might not accept
 * Candidate pool grows based on external factors
   * Employee recruiting
@@ -16,6 +27,8 @@
 * Prof development
   * Explicit time
   * Increase based on work
+* Opening sequence
+  * Choose a name
 * Browser UI?
 
 ## Done
